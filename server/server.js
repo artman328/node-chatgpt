@@ -18,7 +18,7 @@ app.use(express.json())
 
 app.get('/', async (req, res) => {
   res.status(200).send({
-    message: 'Hello from CodeX!'
+    message: 'This is a Chat Server!'
   })
 })
 
@@ -26,7 +26,7 @@ const api = new ChatGPTAPI({
   apiKey: process.env.OPENAI_API_KEY
 })
 
-app.post('/', async (req, res) => {
+app.post('/api/v1/chat', async (req, res) => {
   try {
     const prompt = req.body.prompt;
 
