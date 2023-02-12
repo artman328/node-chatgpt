@@ -5,6 +5,7 @@ const form = document.querySelector('form')
 const chatContainer = document.querySelector('#chat_container')
 
 let loadInterval
+let access_token
 
 function loader(element) {
     element.textContent = ''
@@ -63,6 +64,11 @@ function chatStripe(isAi, value, uniqueId) {
 }
 
 const handleSubmit = async (e) => {
+    access_token = localStorage.getItem('info')
+    if(!access_token){
+        access_token = prompt("请输入你的API密钥")
+        localStorage.setItem('info', access_token)
+    }
     e.preventDefault()
 
     const data = new FormData(form)
@@ -92,7 +98,8 @@ const handleSubmit = async (e) => {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            prompt: data.get('prompt')
+            prompt: data.get('prompt'),
+            access_token
         })
     })
 
@@ -106,16 +113,43 @@ const handleSubmit = async (e) => {
 
         typeText(messageDiv, (parsedData.text+`(total: ${parsedData.totalTokens})`).trim())
     } else {
-        const err = await response.text()
-
-        messageDiv.innerHTML = "Something went wrong"
-        alert(err)
+        const err = await response.json()
+        if(err.statusCode === 401){
+            access_token = prompt("你的API密钥不正确，请重新输入")
+            localStorage.setItem('info', access_token)
+        }
+        else{
+            messageDiv.innerHTML = "程序有错误发生。"
+        }
+        
+        //alert(err)
     }
 }
 
+window.addEventListener('beforeunload', (e) => {
+    console.log(e)
+    if ((/Android/i.test(navigator.userAgent)) || /iPad|iPhone|iPod/i.test(navigator.userAgent)) {
+        //Mobile, do nothing
+        
+    }else{
+        localStorage.removeItem('info');
+    }
+});
+
+window.addEventListener('load', () => {
+    access_token = localStorage.getItem('info')
+    if(!access_token){
+        access_token = prompt("请输入你的API密钥")
+        localStorage.setItem('info', access_token)
+    }
+});
+
+
+
+
 form.addEventListener('submit', handleSubmit)
-// form.addEventListener('keyup', (e) => {
-//     if (e.keyCode === 13) {
-//         handleSubmit(e)
-//     }
-// })
+form.addEventListener('keyup', (e) => {
+    if (e.keyCode === 13) {
+        handleSubmit(e)
+    }
+})

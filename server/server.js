@@ -2,6 +2,7 @@ import express from 'express'
 import * as dotenv from 'dotenv'
 import cors from 'cors'
 import { ChatGPTAPI } from './chatgpt.js'
+import bearerToken from 'express-bearer-token'
 
 
 dotenv.config()
@@ -15,6 +16,13 @@ let conversationId = null, parentMessageId = null
 const app = express()
 app.use(cors())
 app.use(express.json())
+app.use(bearerToken({
+  bodyKey: 'access_token',
+  queryKey: 'access_token',
+  headerKey: 'Bearer',
+  reqKey: 'token',
+  cookie: false, // by default is disabled
+}))
 
 app.get('/', async (req, res) => {
   res.status(200).send({
@@ -23,12 +31,13 @@ app.get('/', async (req, res) => {
 })
 
 const api = new ChatGPTAPI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: "anthing"
 })
 
-app.post('/api/v1/chat', async (req, res) => {
+app.post('/', async (req, res) => {
   try {
     const prompt = req.body.prompt;
+    api._apiKey = req.token;
 
     const response = await api.sendMessage(prompt,{conversationId, parentMessageId});
     conversationId = response.conversationId
@@ -40,7 +49,7 @@ app.post('/api/v1/chat', async (req, res) => {
 
   } catch (error) {
     console.error(error)
-    res.status(500).send(error || '有错误发生。');
+    res.status(500).send(error || 'Something went wrong.');
   }
 })
 
